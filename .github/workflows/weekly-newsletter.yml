@@ -1,13 +1,13 @@
-name: Weekly Newsletter Automation
+name: Weekly News Crawler (Free Version)
 
 # 매주 월요일 오전 9시(KST) 자동 실행
 on:
   schedule:
     - cron: '0 0 * * 1'  # UTC 월요일 00:00 = KST 월요일 09:00
-  workflow_dispatch:  # 수동 실행 버튼도 활성화
+  workflow_dispatch:  # 수동 실행 버튼
 
 jobs:
-  generate-newsletter:
+  crawl-news:
     runs-on: ubuntu-latest
     
     steps:
@@ -19,37 +19,42 @@ jobs:
         with:
           python-version: '3.11'
       
-      - name: 📦 패키지 설치
+      - name: 📦 크롤링 패키지만 설치
         run: |
-          pip install -r requirements.txt
+          pip install beautifulsoup4==4.12.3
+          pip install requests==2.31.0
+          pip install lxml==5.1.0
+          pip install feedparser==6.0.11
       
-      - name: 1️⃣ 뉴스 크롤링
+      - name: 🔍 뉴스 크롤링 실행
         run: |
-          echo "🔍 뉴스 수집 시작..."
+          echo "======================================"
+          echo "📰 이번 주 중소기업 뉴스 수집 시작"
+          echo "======================================"
           python scripts/crawler.py
-          echo "✅ 크롤링 완료"
+          echo ""
+          echo "✅ 크롤링 완료!"
       
-      - name: 2️⃣ 뉴스레터 생성
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          echo "🤖 Claude로 뉴스레터 생성 중..."
-          python scripts/generator.py
-          echo "✅ 생성 완료"
-      
-      - name: 📤 생성된 파일 업로드
+      - name: 📤 수집된 뉴스 업로드
         uses: actions/upload-artifact@v3
         with:
-          name: newsletter-${{ github.run_number }}
-          path: |
-            crawled_data.json
-            newsletter_*.html
+          name: weekly-news-${{ github.run_number }}
+          path: crawled_data.json
           retention-days: 30
       
-      - name: 🎉 완료 알림
+      - name: 🎉 완료 안내
         run: |
           echo "======================================"
-          echo "✅ 뉴스레터 자동 생성 완료!"
+          echo "✅ 뉴스 수집 완료!"
           echo "======================================"
-          echo "📁 Actions 탭 → Artifacts에서 다운로드 가능"
+          echo ""
+          echo "📥 다운로드 방법:"
+          echo "1. Actions 탭으로 이동"
+          echo "2. 이 실행 클릭"
+          echo "3. 하단 Artifacts에서 'weekly-news-...' 다운로드"
+          echo ""
+          echo "📧 뉴스레터 생성 방법:"
+          echo "1. crawled_data.json을 Claude Projects에 업로드"
+          echo "2. '이 뉴스로 협력사용 뉴스레터 만들어줘' 입력"
+          echo "3. 생성된 HTML을 이메일로 발송"
           echo "======================================"
